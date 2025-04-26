@@ -1,3 +1,5 @@
+from typing import override
+
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -47,6 +49,22 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     A ViewSet for viewing and editing Expense instances.
     Provides list, create, retrieve, update, partial_update, and destroy actions.
     """
-    queryset = Expense.objects.all()
+
     serializer_class = ExpenseSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    
+    @override
+    def get_queryset(self):
+        """
+        This view should return only expenses for the currently authenticated user.
+        """
+        user = self.request.user
+        return Expense.objects.filter(user=user).order_by('-date', '-created_at')
+
+    @override
+    def perform_create(self,serializer):
+        """
+        Assign the authenticated user to the expense instance upon creation.
+        """
+        serializer.save(user=self.request.user)
+
