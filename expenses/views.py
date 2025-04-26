@@ -1,3 +1,5 @@
+import datetime
+from datetime import timedelta
 from typing import override
 
 from rest_framework import permissions, status, viewsets
@@ -6,6 +8,7 @@ from rest_framework.views import APIView
 
 from expenses import serializers
 
+from .filters import ExpenseFilter
 from .models import Expense
 from .serializers import ExpenseSerializer, UserRegistrationSerializer
 
@@ -52,6 +55,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
 
     serializer_class = ExpenseSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    filter_class = ExpenseFilter
     
     @override
     def get_queryset(self):
@@ -59,7 +63,29 @@ class ExpenseViewSet(viewsets.ModelViewSet):
         This view should return only expenses for the currently authenticated user.
         """
         user = self.request.user
-        return Expense.objects.filter(user=user).order_by('-date', '-created_at')
+        queryset = Expense.objects.filter(user=user) # Base queryset filtered by user
+
+        time_period = self.request.query_params.get('time_period')
+
+        if time_period:
+            today = datetime.date.today()
+            start_date = None
+
+            if time_period == 'past_week':
+                start_date = today - timedelta(days=7)
+            elif time_period == 'last_month':
+                start_date = today - timedelta(days=30)
+            elif time_period == 'last_3_months':
+                start_date = today - timedelta(days=90)
+
+            if start_date:
+                queryset = queryset.filter(date__gte=start_date, date__lte=today)
+            else:
+                print(f"Warning: Unrecognized time_period '{time_period}'")
+
+        queryset = queryset.order_by('-date', '-created_at')
+        return queryset
+
 
     @override
     def perform_create(self,serializer):
