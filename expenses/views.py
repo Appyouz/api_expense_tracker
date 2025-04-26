@@ -1,10 +1,11 @@
-from rest_framework import permissions, status
+from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from expenses import serializers
 
-from .serializers import UserRegistrationSerializer
+from .models import Expense
+from .serializers import ExpenseSerializer, UserRegistrationSerializer
 
 
 class UserRegistrationView(APIView):
@@ -39,3 +40,13 @@ class UserRegistrationView(APIView):
         }
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class ExpenseViewSet(viewsets.ModelViewSet):
+    """
+    A ViewSet for viewing and editing Expense instances.
+    Provides list, create, retrieve, update, partial_update, and destroy actions.
+    """
+    queryset = Expense.objects.all()
+    serializer_class = ExpenseSerializer
+    permission_classes = (permissions.IsAuthenticated,)
