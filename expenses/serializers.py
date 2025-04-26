@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from .models import Expense, ExpenseCategory
+
 User = get_user_model()
 
 class UserRegistrationSerializer(serializers.Serializer):
@@ -36,3 +38,24 @@ class UserRegistrationSerializer(serializers.Serializer):
         )
 
         return user
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Expense model.
+    Handles converting Expense model instances to/from JSON.
+    """
+    class Meta: # type: ignore
+        model = Expense
+        fields = [
+        'id',
+        'user',
+        'category',
+        'amount',
+        'date',
+        'description',
+        'created_at',
+        'updated_at',
+    ]
+
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
